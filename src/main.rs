@@ -1,4 +1,4 @@
-use crate::tokenizer::tokenize;
+use crate::tokenizer::Tokenizer;
 use hydro::{Token, TokenType};
 use std::{env, fmt::Write, fs};
 
@@ -65,7 +65,9 @@ fn main() {
         }
     };
 
-    let tokens = match tokenize(&contents) {
+    let tokenizer = Tokenizer { input: contents };
+
+    let tokens = match tokenizer.tokenize() {
         Ok(val) => val,
         Err(e) => {
             println!("ERROR: {}: {}", e, input);
