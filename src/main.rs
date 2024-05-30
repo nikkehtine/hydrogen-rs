@@ -6,7 +6,7 @@ use std::{
 
 #[derive(Debug)]
 pub enum TokenType {
-    Return,
+    Exit,
     IntLit,
     Semi,
 }
@@ -30,9 +30,9 @@ pub fn tokenize(s: &str) -> Result<Vec<Token>, &'static str> {
             buffer.push(c);
             continue;
         } else if c.is_whitespace() || c.is_ascii_punctuation() {
-            if buffer.as_str() == "return" {
+            if buffer.as_str() == "exit" {
                 tokens.push(Token {
-                    ttype: TokenType::Return,
+                    ttype: TokenType::Exit,
                     value: None,
                 });
             } else if let Ok(_) = buffer.as_str().parse::<i32>() {
@@ -70,9 +70,9 @@ pub fn assemble(tokens: &Vec<Token>) -> Result<String, &'static str> {
 
     for (i, token) in iter {
         match token.ttype {
-            TokenType::Return => {
+            TokenType::Exit => {
                 if i != 0 {
-                    return Err("return in wrong place");
+                    return Err("exit in wrong place");
                 }
             }
             TokenType::IntLit => {
