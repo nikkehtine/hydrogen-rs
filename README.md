@@ -2,9 +2,11 @@
 
 Shamelessly stolen from [@orosmatthew](https://github.com/orosmatthew) - [Creating a compiler](https://www.youtube.com/playlist?list=PLUDlas_Zy_qC7c5tCgTMYq2idyyT241qs) (C++)
 
-Learning exercise
+- [Link to original repo](https://github.com/orosmatthew/hydrogen-cpp)
 
-Written in Rust ;);)
+## Building
+
+TODO
 
 ## Useful links
 
