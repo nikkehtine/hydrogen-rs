@@ -1,2 +1,6 @@
+# OS
 .DS_Store
+# Rust
 /target
+# Program
+/out
