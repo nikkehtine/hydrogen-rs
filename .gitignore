@@ -1,6 +1,10 @@
 # OS
 .DS_Store
+
 # Rust
 /target
-# Program
+
+# Program output
 /out
+out.asm
+*.o

@@ -1,12 +1,30 @@
 # Hydrogen
 
-Shamelessly stolen from [@orosmatthew](https://github.com/orosmatthew) - [Creating a compiler](https://www.youtube.com/playlist?list=PLUDlas_Zy_qC7c5tCgTMYq2idyyT241qs) (C++)
+Shamelessly stolen from [@orosmatthew](https://github.com/orosmatthew/hydrogen-cpp) - [Creating a compiler](https://www.youtube.com/playlist?list=PLUDlas_Zy_qC7c5tCgTMYq2idyyT241qs) (C++)
 
-- [Link to original repo](https://github.com/orosmatthew/hydrogen-cpp)
+## Building, testing, running
 
-## Building
+**My cool script**
 
-TODO
+```sh
+./run_test.sh
+```
+
+- `--no-cleanup` - don't remove output files
+
+**The boring way**
+
+```sh
+cargo run -- test.hy
+nasm -f elf64 -o out.o out.asm
+ld -o out out.o
+./out
+```
+
+```sh
+cargo build --release
+./target/release/hydro test.hy
+```
 
 ## Useful links
 
