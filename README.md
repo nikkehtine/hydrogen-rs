@@ -4,6 +4,8 @@ Shamelessly stolen from [@orosmatthew](https://github.com/orosmatthew/hydrogen-c
 
 ## Building, testing, running
 
+⚠ Only tested on Linux
+
 **My cool script**
 
 ```sh

@@ -15,9 +15,10 @@ print_blue() {
 }
 
 # Build and run the program
+print_blue "RUNNING (cargo run -- $NAME.hy):"
 cargo run -- test.hy
 if [ $? -ne 0 ]; then
-    print_red "FAILED TO BUILD COMPILER"
+    print_red "FAILED TO CARGO RUN"
     exit 1
 fi
 mkdir -p $BUILD_DIR

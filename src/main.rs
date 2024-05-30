@@ -1,64 +1,8 @@
-use std::{
-    env,
-    fmt::{Debug, Write},
-    fs,
-};
+use crate::tokenizer::Tokenizer;
+use hydro::{Token, TokenType};
+use std::{env, fmt::Write, fs};
 
-#[derive(Debug)]
-pub enum TokenType {
-    Return,
-    IntLit,
-    Semi,
-}
-
-#[derive(Debug)]
-pub struct Token {
-    ttype: TokenType,
-    value: Option<String>,
-}
-
-pub fn tokenize(s: &str) -> Result<Vec<Token>, &'static str> {
-    let mut buffer = String::new();
-    let mut tokens: Vec<Token> = Vec::new();
-
-    let mut chars = s.chars();
-    while let Some(c) = chars.next() {
-        if c.is_alphabetic() || !buffer.is_empty() && c.is_alphanumeric() {
-            buffer.push(c);
-            continue;
-        } else if c.is_digit(10) {
-            buffer.push(c);
-            continue;
-        } else if c.is_whitespace() || c.is_ascii_punctuation() {
-            if buffer.as_str() == "return" {
-                tokens.push(Token {
-                    ttype: TokenType::Return,
-                    value: None,
-                });
-            } else if let Ok(_) = buffer.as_str().parse::<i32>() {
-                tokens.push(Token {
-                    ttype: TokenType::IntLit,
-                    value: Some(buffer.clone()),
-                });
-            } else if buffer.is_empty() {
-                continue;
-            } else {
-                return Err("You messed up");
-            }
-            buffer.clear();
-            if c == ';' {
-                tokens.push(Token {
-                    ttype: TokenType::Semi,
-                    value: None,
-                });
-            }
-        } else {
-            return Err("You messed up");
-        }
-    }
-
-    Ok(tokens)
-}
+mod tokenizer;
 
 pub fn assemble(tokens: &Vec<Token>) -> Result<String, &'static str> {
     let iter = tokens.iter().enumerate();
@@ -70,9 +14,9 @@ pub fn assemble(tokens: &Vec<Token>) -> Result<String, &'static str> {
 
     for (i, token) in iter {
         match token.ttype {
-            TokenType::Return => {
+            TokenType::Exit => {
                 if i != 0 {
-                    return Err("return in wrong place");
+                    return Err("exit in wrong place");
                 }
             }
             TokenType::IntLit => {
@@ -121,7 +65,9 @@ fn main() {
         }
     };
 
-    let tokens = match tokenize(&contents) {
+    let tokenizer = Tokenizer { input: contents };
+
+    let tokens = match tokenizer.tokenize() {
         Ok(val) => val,
         Err(e) => {
             println!("ERROR: {}: {}", e, input);
