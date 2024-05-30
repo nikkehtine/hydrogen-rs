@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Commands:
+#    --no-cleanup: Don't delete the output directory
+
 # Variables
 BUILD_DIR=out
 NAME=test
