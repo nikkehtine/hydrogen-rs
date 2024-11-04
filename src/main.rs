@@ -1,3 +1,5 @@
+use std::{fs, process};
+
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -7,13 +9,21 @@ struct Args {
     input: String,
 
     // Output file
-    #[arg(short)]
+    #[arg(short, default_value_t = String::from("out"))]
     output: String,
 }
 
 fn main() {
     let args = Args::parse();
+    let _out_name = format!("{}.asm", &args.output);
 
-    println!("Hello, {}!", args.input);
-    println!("We goin' into {} with this one", args.output);
+    let contents = match fs::read_to_string(&args.input) {
+        Ok(v) => v,
+        Err(v) => {
+            eprintln!("Bruh moment: {}", v.to_string());
+            process::exit(1);
+        }
+    };
+
+    println!("{contents}");
 }
