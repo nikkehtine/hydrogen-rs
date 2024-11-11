@@ -14,8 +14,8 @@ Project from
 
 ### Docs
 
-- [String (Rust Docs)](https://doc.rust-lang.org/std/string/struct.String.html)
-- [Peekable (Rust Docs)](https://doc.rust-lang.org/beta/std/iter/struct.Peekable.html)
+- [String](https://doc.rust-lang.org/std/string/struct.String.html)
+- [Peekable](https://doc.rust-lang.org/beta/std/iter/struct.Peekable.html)
 
 ### Libraries
 

@@ -1,5 +1,8 @@
 use snafu::{prelude::*, Whatever};
-use std::{fs, process};
+use std::{
+    fs,
+    process::{self},
+};
 
 use clap::Parser;
 
@@ -14,7 +17,7 @@ struct Args {
     output: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum TokenType {
     _Return,
     _IntLit,
@@ -85,6 +88,32 @@ fn tokenize(input: &String) -> Result<Vec<Token>, Whatever> {
     return Ok(tokens);
 }
 
+fn assemble_tokens(tokens: &Vec<Token>) -> Result<String, Whatever> {
+    let mut output = String::new();
+    output += "global _start\nstart:\n";
+    let mut t_iter = tokens.iter().peekable();
+    while let Some(token) = t_iter.next() {
+        match token.token_type {
+            TokenType::_Return => {
+                if let Some(token1) = t_iter.next_if(|&tt| tt.token_type == TokenType::_IntLit) {
+                    if let Some(_token2) = t_iter.next_if(|&tt| tt.token_type == TokenType::_Semi) {
+                        let ret_val = Some(token1).unwrap();
+                        output += "    mov rax, 60\n";
+                        output += &format!("    mov rdi, {}\n", ret_val.value.as_ref().unwrap());
+                        output += "    syscall\n";
+                    } else {
+                        whatever!("wrong token")
+                    }
+                } else {
+                    whatever!("wrong token")
+                }
+            }
+            _ => whatever!("wrong token!"),
+        }
+    }
+    return Ok(output);
+}
+
 fn main() {
     let args = Args::parse();
     let _out_name = format!("{}.asm", &args.output);
@@ -107,10 +136,15 @@ fn main() {
         }
     };
 
-    for e in tokens {
-        println!("Token: {:?}", e.token_type);
-        if let Some(v) = e.value {
+    for e in &tokens {
+        println!("Token: {:?}", &e.token_type);
+        if let Some(v) = &e.value {
             println!("  Value: {:?}", v);
         }
     }
+
+    let _output_asm = match assemble_tokens(&tokens) {
+        Ok(v) => print!("{v}"),
+        Err(e) => eprintln!("Bruh moment: {e}"),
+    };
 }
