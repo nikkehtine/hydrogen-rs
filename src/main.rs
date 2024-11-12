@@ -109,16 +109,30 @@ fn assemble_tokens(tokens: &Vec<Token>) -> Result<String, Whatever> {
                                             None => whatever!("value required"),
                                         };
                                     }
-                                    _ => whatever!("wrong token: {:?}", &token2.token_type),
+                                    _ => whatever!("unexpected token: {:?}", &token.token_type),
                                 }
+                            } else {
+                                whatever!(
+                                    "unexpected token after {:#?}:\n  reading {:?}\n  expected {:?}",
+                                    &token1.token_type,
+                                    &t_iter.peek(),
+                                    TokenType::_Semi
+                                )
                             }
                         }
-                        _ => whatever!("wrong token: {:?}", &token1.token_type),
+                        _ => whatever!("unexpected token: {:?}", &token1.token_type),
                     }
+                } else {
+                    whatever!(
+                        "unexpected token after {:#?}:\n  reading {:?}\n  expected {:?}",
+                        &token.token_type,
+                        &t_iter.peek(),
+                        TokenType::_IntLit
+                    )
                 }
             }
             TokenType::_Whitespace => continue,
-            _ => whatever!("wrong token: {:?}", &token.token_type),
+            _ => whatever!("unexpected token: {:?}", &token.token_type),
         }
     }
     return Ok(output);
