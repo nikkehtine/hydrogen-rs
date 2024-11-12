@@ -7,6 +7,17 @@ Project from
 
 ## Important links
 
+### Learning
+
 - [Reading a file (Rust Book)](https://doc.rust-lang.org/book/ch12-02-reading-a-file.html)
-- [Rust String type (Rust Docs)](https://doc.rust-lang.org/std/string/struct.String.html)
-- [Clap docs (docs.rs)](https://docs.rs/clap/latest/clap/)
+- [match (Rust By Example)](https://doc.rust-lang.org/rust-by-example/flow_control/match.html)
+
+### Docs
+
+- [String](https://doc.rust-lang.org/std/string/struct.String.html)
+- [Peekable](https://doc.rust-lang.org/beta/std/iter/struct.Peekable.html)
+
+### Libraries
+
+- [Clap](https://docs.rs/clap/latest/clap/)
+- [Snafu](https://docs.rs/snafu/latest/snafu/)
