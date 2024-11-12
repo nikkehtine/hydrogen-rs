@@ -25,13 +25,11 @@ enum TokenType {
     _Whitespace,
 }
 
+#[derive(Debug)]
 struct Token {
     token_type: TokenType,
     value: Option<String>,
 }
-
-// #[derive(Debug, Snafu)]
-// enum Error
 
 fn tokenize(input: &String) -> Result<Vec<Token>, Whatever> {
     let mut c_iter = input.chars().peekable();
@@ -55,7 +53,7 @@ fn tokenize(input: &String) -> Result<Vec<Token>, Whatever> {
                         buf.clear();
                     }
                     _ => {
-                        whatever!("no such keyword: {}", buf)
+                        whatever!("no such keyword: {}", &buf)
                     }
                 }
             }
@@ -76,11 +74,13 @@ fn tokenize(input: &String) -> Result<Vec<Token>, Whatever> {
                     value: None,
                 });
             }
-            _ if c.is_whitespace() => {
-                c_iter.next();
-            }
+            _ if c.is_whitespace() => continue,
+            // _ if c.is_whitespace() => tokens.push(Token {
+            //     token_type: TokenType::_Whitespace,
+            //     value: None,
+            // }),
             _ => {
-                c_iter.next();
+                whatever!("unrecognized character: {c}")
             }
         }
     }
@@ -89,26 +89,36 @@ fn tokenize(input: &String) -> Result<Vec<Token>, Whatever> {
 }
 
 fn assemble_tokens(tokens: &Vec<Token>) -> Result<String, Whatever> {
-    let mut output = String::new();
-    output += "global _start\nstart:\n";
+    let mut output = String::from("global _start\nstart:\n");
     let mut t_iter = tokens.iter().peekable();
     while let Some(token) = t_iter.next() {
-        match token.token_type {
+        match &token.token_type {
             TokenType::_Return => {
-                if let Some(token1) = t_iter.next_if(|&tt| tt.token_type == TokenType::_IntLit) {
-                    if let Some(_token2) = t_iter.next_if(|&tt| tt.token_type == TokenType::_Semi) {
-                        let ret_val = Some(token1).unwrap();
-                        output += "    mov rax, 60\n";
-                        output += &format!("    mov rdi, {}\n", ret_val.value.as_ref().unwrap());
-                        output += "    syscall\n";
-                    } else {
-                        whatever!("wrong token")
+                if let Some(token1) = t_iter.next() {
+                    match &token1.token_type {
+                        TokenType::_IntLit => {
+                            if let Some(token2) = t_iter.next() {
+                                match &token2.token_type {
+                                    TokenType::_Semi => {
+                                        match &token1.value {
+                                            Some(v) => {
+                                                output += "    mov rax, 60\n";
+                                                output += &format!("    mov rdi, {}\n", v);
+                                                output += "    syscall\n";
+                                            }
+                                            None => whatever!("value required"),
+                                        };
+                                    }
+                                    _ => whatever!("wrong token: {:?}", &token2.token_type),
+                                }
+                            }
+                        }
+                        _ => whatever!("wrong token: {:?}", &token1.token_type),
                     }
-                } else {
-                    whatever!("wrong token")
                 }
             }
-            _ => whatever!("wrong token!"),
+            TokenType::_Whitespace => continue,
+            _ => whatever!("wrong token: {:?}", &token.token_type),
         }
     }
     return Ok(output);
@@ -144,7 +154,7 @@ fn main() {
     }
 
     let _output_asm = match assemble_tokens(&tokens) {
-        Ok(v) => print!("{v}"),
+        Ok(v) => print!("===\n{v}"),
         Err(e) => eprintln!("Bruh moment: {e}"),
     };
 }
