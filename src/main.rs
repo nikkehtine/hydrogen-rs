@@ -1,7 +1,9 @@
 use snafu::{prelude::*, Whatever};
 use std::{
-    fs,
-    process::{self},
+    fs::{self, File},
+    io::Write,
+    path::Path,
+    process::{self, Command, Output},
 };
 
 use clap::Parser;
@@ -15,6 +17,10 @@ struct Args {
     // Output file
     #[arg(short, default_value_t = String::from("out"))]
     output: String,
+
+    // Verbosity
+    #[arg(short, default_value_t = false)]
+    verbose: bool,
 }
 
 #[derive(Debug, PartialEq)]
@@ -31,7 +37,7 @@ struct Token {
     value: Option<String>,
 }
 
-fn tokenize(input: &String) -> Result<Vec<Token>, Whatever> {
+fn tokenize(input: String) -> Result<Vec<Token>, Whatever> {
     let mut c_iter = input.chars().peekable();
 
     let mut tokens: Vec<Token> = Vec::new();
@@ -88,8 +94,8 @@ fn tokenize(input: &String) -> Result<Vec<Token>, Whatever> {
     return Ok(tokens);
 }
 
-fn assemble_tokens(tokens: &Vec<Token>) -> Result<String, Whatever> {
-    let mut output = String::from("global _start\nstart:\n");
+fn assemble_tokens(tokens: Vec<Token>) -> Result<String, Whatever> {
+    let mut output = String::from("global _start\n_start:\n");
     let mut t_iter = tokens.iter().peekable();
     while let Some(token) = t_iter.next() {
         match &token.token_type {
@@ -138,9 +144,22 @@ fn assemble_tokens(tokens: &Vec<Token>) -> Result<String, Whatever> {
     return Ok(output);
 }
 
+fn run_nasm(filename: &str, input: &str) -> Result<Output, std::io::Error> {
+    Command::new("nasm")
+        .args(["-felf64", "-o", &format!("{filename}.out"), &input])
+        .output()
+}
+
+fn run_ld(filename: &str) -> Result<Output, std::io::Error> {
+    Command::new("ld")
+        .args(["-o", &filename, &format!("{filename}.out")])
+        .output()
+}
+
 fn main() {
     let args = Args::parse();
-    let _out_name = format!("{}.asm", &args.output);
+    let out_file = Path::new(&args.output);
+    let out_name = out_file.file_stem().unwrap().to_str().unwrap();
 
     let contents = match fs::read_to_string(&args.input) {
         Ok(v) => v,
@@ -150,9 +169,23 @@ fn main() {
         }
     };
 
-    print!("{contents}");
+    let tokens = match tokenize(contents) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("Bruh moment: {e}");
+            process::exit(1);
+        }
+    };
+    if args.verbose {
+        for t in &tokens {
+            println!("Token: {:?}", &t.token_type);
+            if let Some(v) = &t.value {
+                println!("  Value: {:?}", v);
+            }
+        }
+    }
 
-    let tokens = match tokenize(&contents) {
+    let output_asm = match assemble_tokens(tokens) {
         Ok(v) => v,
         Err(e) => {
             eprintln!("Bruh moment: {e}");
@@ -160,15 +193,41 @@ fn main() {
         }
     };
 
-    for e in &tokens {
-        println!("Token: {:?}", &e.token_type);
-        if let Some(v) = &e.value {
-            println!("  Value: {:?}", v);
+    match File::create(out_file).and_then(|mut f| f.write_all(output_asm.as_bytes())) {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Bruh moment: {e}");
+            process::exit(1);
         }
     }
 
-    let _output_asm = match assemble_tokens(&tokens) {
-        Ok(v) => print!("===\n{v}"),
-        Err(e) => eprintln!("Bruh moment: {e}"),
+    match run_nasm(out_name, out_file.to_str().unwrap()) {
+        Ok(o) => {
+            if !o.stdout.is_empty() {
+                println!("{}", &String::from_utf8_lossy(&o.stdout));
+            }
+            if !o.stderr.is_empty() {
+                eprintln!("{}", &String::from_utf8_lossy(&o.stderr));
+            }
+        }
+        Err(e) => {
+            eprintln!("Bruh moment: {e}");
+            process::exit(1);
+        }
+    };
+
+    match run_ld(out_name) {
+        Ok(o) => {
+            if !o.stdout.is_empty() {
+                println!("{:?}", String::from_utf8_lossy(&o.stdout));
+            }
+            if !o.stderr.is_empty() {
+                eprintln!("{:?}", String::from_utf8_lossy(&o.stderr));
+            }
+        }
+        Err(e) => {
+            eprintln!("Bruh moment: {e}");
+            process::exit(1);
+        }
     };
 }
