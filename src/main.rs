@@ -1,3 +1,4 @@
+use clap::Parser;
 use snafu::{prelude::*, Whatever};
 use std::{
     fs::{self, File},
@@ -6,7 +7,7 @@ use std::{
     process::{self, Command, Output},
 };
 
-use clap::Parser;
+pub mod tokenizer;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -24,74 +25,17 @@ struct Args {
 }
 
 #[derive(Debug, PartialEq)]
-enum TokenType {
-    _Return,
-    _IntLit,
-    _Semi,
+pub enum TokenType {
+    Exit,
+    IntLit,
+    Semi,
     _Whitespace,
 }
 
 #[derive(Debug)]
-struct Token {
+pub struct Token {
     token_type: TokenType,
     value: Option<String>,
-}
-
-fn tokenize(input: String) -> Result<Vec<Token>, Whatever> {
-    let mut c_iter = input.chars().peekable();
-
-    let mut tokens: Vec<Token> = Vec::new();
-    let mut buf = String::new();
-
-    while let Some(c) = c_iter.next() {
-        match c {
-            _ if c.is_alphabetic() => {
-                buf.push(c);
-                while let Some(next_c) = c_iter.next_if(|&x| x.is_alphanumeric()) {
-                    buf.push(next_c);
-                }
-                match &buf[..] {
-                    "return" => {
-                        tokens.push(Token {
-                            token_type: TokenType::_Return,
-                            value: None,
-                        });
-                        buf.clear();
-                    }
-                    _ => {
-                        whatever!("no such keyword: {}", &buf)
-                    }
-                }
-            }
-            _ if c.is_numeric() => {
-                buf.push(c);
-                while let Some(next_c) = c_iter.next_if(|&x| x.is_numeric()) {
-                    buf.push(next_c);
-                }
-                tokens.push(Token {
-                    token_type: TokenType::_IntLit,
-                    value: Some(buf.clone()),
-                });
-                buf.clear();
-            }
-            ';' => {
-                tokens.push(Token {
-                    token_type: TokenType::_Semi,
-                    value: None,
-                });
-            }
-            _ if c.is_whitespace() => continue,
-            // _ if c.is_whitespace() => tokens.push(Token {
-            //     token_type: TokenType::_Whitespace,
-            //     value: None,
-            // }),
-            _ => {
-                whatever!("unrecognized character: {c}")
-            }
-        }
-    }
-
-    return Ok(tokens);
 }
 
 fn assemble_tokens(tokens: Vec<Token>) -> Result<String, Whatever> {
@@ -99,13 +43,13 @@ fn assemble_tokens(tokens: Vec<Token>) -> Result<String, Whatever> {
     let mut t_iter = tokens.iter().peekable();
     while let Some(token) = t_iter.next() {
         match &token.token_type {
-            TokenType::_Return => {
+            TokenType::Exit => {
                 if let Some(token1) = t_iter.next() {
                     match &token1.token_type {
-                        TokenType::_IntLit => {
+                        TokenType::IntLit => {
                             if let Some(token2) = t_iter.next() {
                                 match &token2.token_type {
-                                    TokenType::_Semi => {
+                                    TokenType::Semi => {
                                         match &token1.value {
                                             Some(v) => {
                                                 output += "    mov rax, 60\n";
@@ -122,7 +66,7 @@ fn assemble_tokens(tokens: Vec<Token>) -> Result<String, Whatever> {
                                     "unexpected token after {:#?}:\n  reading {:?}\n  expected {:?}",
                                     &token1.token_type,
                                     &t_iter.peek(),
-                                    TokenType::_Semi
+                                    TokenType::Semi
                                 )
                             }
                         }
@@ -133,7 +77,7 @@ fn assemble_tokens(tokens: Vec<Token>) -> Result<String, Whatever> {
                         "unexpected token after {:#?}:\n  reading {:?}\n  expected {:?}",
                         &token.token_type,
                         &t_iter.peek(),
-                        TokenType::_IntLit
+                        TokenType::IntLit
                     )
                 }
             }
@@ -169,7 +113,7 @@ fn main() {
         }
     };
 
-    let tokens = match tokenize(contents) {
+    let tokens = match tokenizer::tokenize(contents) {
         Ok(v) => v,
         Err(e) => {
             eprintln!("Bruh moment: {e}");
