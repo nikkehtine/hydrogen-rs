@@ -90,13 +90,13 @@ fn assemble_tokens(tokens: Vec<Token>) -> Result<String, Whatever> {
 
 fn run_nasm(filename: &str, input: &str) -> Result<Output, std::io::Error> {
     Command::new("nasm")
-        .args(["-felf64", "-o", &format!("{filename}.out"), &input])
+        .args(["-felf64", "-o", &format!("{filename}.o"), &input])
         .output()
 }
 
 fn run_ld(filename: &str) -> Result<Output, std::io::Error> {
     Command::new("ld")
-        .args(["-o", &filename, &format!("{filename}.out")])
+        .args(["-o", &filename, &format!("{filename}.o")])
         .output()
 }
 
